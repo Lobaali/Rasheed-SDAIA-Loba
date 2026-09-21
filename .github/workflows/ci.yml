@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,api]"
+      - run: ruff check src/ tests/
+      - run: lint-imports
+      - run: mypy src/rasheed
+
+  test:
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,api]"
+      - run: pytest -m "not slow" --durations=10
+
+  image-smoke-test:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t rasheed:ci .
+      - name: Start container and wait for readiness
+        run: |
+          docker run -d --name rasheed-smoke -p 8000:8000 rasheed:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/v1/ready; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8000/v1/health
+          curl -fsS http://localhost:8000/v1/ready
+      - name: Send one valid and one malformed request
+        run: |
+          curl -fsS -X POST http://localhost:8000/v1/predict \
+            -H "Content-Type: application/json" \
+            -d '{"application_id":"APP-CI-1","gpa":3.5,"household_size":4,"monthly_family_income_sar":3000,"documents_complete":true}'
+          status=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/v1/predict \
+            -H "Content-Type: application/json" \
+            -d '{"application_id":"APP-CI-2","gpa":99,"household_size":4,"monthly_family_income_sar":3000,"documents_complete":true}')
+          if [ "$status" -lt 400 ] || [ "$status" -ge 500 ]; then
+            echo "expected 4xx for malformed payload, got $status"; exit 1
+          fi
+      - run: docker stop rasheed-smoke
+
+  publish:
+    needs: image-smoke-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+      - run: docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}

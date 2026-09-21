@@ -1,0 +1,16 @@
+.git
+.venv
+__pycache__/
+*.pyc
+tests/
+notebooks/
+.env
+*.md
+!README.md
+.github/
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.importlinter
+scripts/
+payloads/

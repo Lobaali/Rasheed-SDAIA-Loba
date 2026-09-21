@@ -22,6 +22,8 @@ jobs:
   test:
     needs: lint-and-typecheck
     runs-on: ubuntu-latest
+    env:
+      RASHEED_MODEL_PATH: models/rasheed_lr_v1.joblib
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

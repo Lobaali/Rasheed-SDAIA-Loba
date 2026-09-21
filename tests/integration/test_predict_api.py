@@ -85,3 +85,11 @@ def test_health_and_ready_with_real_lifespan():
         r = client.get("/v1/ready")
         assert r.status_code == 200
         assert r.json() == {"status": "ready"}
+
+@pytest.mark.integration
+def test_malformed_response_has_trace_id(client_factory):
+    r = client_factory().post("/v1/predict", json={"application_id": "APP-1"})
+    assert r.status_code == 422
+    body = r.json()
+    assert "trace_id" in body
+    assert body["error"] == "ValidationError"

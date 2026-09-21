@@ -31,3 +31,22 @@ signature. These are business decisions, not implementation details —
 naming them lets a non-engineer (a financial-aid officer, a reviewer)
 scan the top of the file and see every policy number without reading
 the function body.
+
+## 4. `strict=True` on the request schema
+
+Found during testing: Pydantic v2's default (lenient) mode coerces
+strings like `"yes"` into `bool`, which would have silently let a
+malformed `documents_complete` field through as valid. Switched
+`ApplicationRequest` to `strict=True` — closes the gap, caught by the
+malformed-payload corpus test.
+
+## 5. `redis_duplicate_checker.py` is excluded from the coverage gate
+
+It's a thin I/O wrapper around a real Redis client with no branching
+logic of its own — testing it meaningfully would require a real Redis
+instance, which the fast per-commit suite intentionally avoids. Per the
+course's own guidance ("exclude thin adapter I/O rather than game the
+number"), it's listed in `pyproject.toml`'s `[tool.coverage.run] omit`.
+The logic it wraps (the downgrade-on-duplicate rule) IS tested, via
+`InMemoryDuplicateChecker` test doubles in
+`tests/unit/test_duplicate_checker_extension.py`.

@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.4.0",
     "scikit-learn>=1.5.0",
     "joblib>=1.4.0",
+    "redis>=5.0.0",
 ]
 
 [project.optional-dependencies]

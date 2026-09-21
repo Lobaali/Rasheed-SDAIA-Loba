@@ -1,0 +1,29 @@
+[importlinter]
+root_package = rasheed
+
+[importlinter:contract:1]
+name = Layers: domain cannot import service, adapters, or api
+type = forbidden
+source_modules =
+    rasheed.domain
+forbidden_modules =
+    rasheed.service
+    rasheed.adapters
+    rasheed.api
+
+[importlinter:contract:2]
+name = Layers: service cannot import adapters or api
+type = forbidden
+source_modules =
+    rasheed.service
+forbidden_modules =
+    rasheed.adapters
+    rasheed.api
+
+[importlinter:contract:3]
+name = Layers: adapters cannot import api
+type = forbidden
+source_modules =
+    rasheed.adapters
+forbidden_modules =
+    rasheed.api

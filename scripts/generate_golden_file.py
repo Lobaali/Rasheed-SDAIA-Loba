@@ -10,17 +10,18 @@ import sys
 
 sys.path.insert(0, "src")
 
+from config import Settings
 from rasheed.adapters.sklearn_model import SklearnModel  # noqa: E402
 from rasheed.domain.entities import Application  # noqa: E402
 
 OUT_PATH = "tests/behavioural/golden_scores_v1.csv"
-MODEL_PATH = "models/rasheed_lr_v1.joblib"
 N_ROWS = 500
 SEED = 7
 
 
 def main() -> None:
-    model = SklearnModel.load(MODEL_PATH)
+    settings = Settings()
+    model = SklearnModel.load(str(settings.model_path))    
     rng = random.Random(SEED)
     rows = []
     for i in range(N_ROWS):

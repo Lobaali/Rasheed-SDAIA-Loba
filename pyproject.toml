@@ -64,3 +64,4 @@ python_version = "3.12"
 mypy_path = "src"
 ignore_missing_imports = true
 disallow_untyped_defs = false
+plugins = ["pydantic.mypy"]

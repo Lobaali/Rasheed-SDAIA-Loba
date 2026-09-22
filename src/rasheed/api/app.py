@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     from rasheed.service.scorer import ScholarshipScorer
 
     t0 = time.perf_counter()
-    model = SklearnModel.load(settings.model_path)
+    model = SklearnModel.load(str(settings.model_path))
 
     duplicate_checker = None
     if settings.redis_url:

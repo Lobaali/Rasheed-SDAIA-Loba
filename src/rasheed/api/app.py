@@ -46,7 +46,7 @@ def _configure_logging(level: str) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    settings = Settings()  # type: ignore[call-arg]  # pydantic-settings fills required fields from env at runtime
+    settings = Settings() 
     _configure_logging(settings.log_level)
 
     from rasheed.service.scorer import ScholarshipScorer
@@ -59,7 +59,7 @@ async def lifespan(app: FastAPI):
         import redis as redis_lib
 
         from rasheed.adapters.redis_duplicate_checker import RedisDuplicateChecker
-        redis_client = redis_lib.from_url(settings.redis_url)
+        redis_client = redis_lib.from_url(settings.redis_url.get_secret_value())        
         duplicate_checker = RedisDuplicateChecker(redis_client)
 
     scorer = ScholarshipScorer(

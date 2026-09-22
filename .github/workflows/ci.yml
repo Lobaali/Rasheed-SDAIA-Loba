@@ -40,12 +40,17 @@ jobs:
       - run: docker build -t rasheed:ci .
       - name: Start container and wait for readiness
         run: |
-          docker run -d --name rasheed-smoke -p 8000:8000 \
-            -e RASHEED_MODEL_PATH=models/rasheed_lr_v1.joblib \
-            rasheed:ci          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:8000/v1/ready; then break; fi
+          docker run -d --name rasheed-smoke -p 8000:8000 -e RASHEED_MODEL_PATH=models/rasheed_lr_v1.joblib rasheed:ci
+          ready=false
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/v1/ready; then ready=true; break; fi
             sleep 1
           done
+          if [ "$ready" != "true" ]; then
+            echo "Container never became ready. Logs:"
+            docker logs rasheed-smoke
+            exit 1
+          fi
           curl -fsS http://localhost:8000/v1/health
           curl -fsS http://localhost:8000/v1/ready
       - name: Send one valid and one malformed request

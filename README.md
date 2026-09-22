@@ -410,7 +410,7 @@ committed credential), is in `INCIDENT.md`.
         `-- behavioural/                 # real trained model, marked @pytest.mark.slow
 
   ---
-  ## 14. API walkthrough 
+  ## 14. API walkthrough (Demo)
 
 The API can also be tested interactively through Swagger UI at `http://localhost:8000/docs`.
 
@@ -426,7 +426,7 @@ curl -X POST http://localhost:8000/v1/predict \
 
 The service returns `auto_accept` for this application. The response also includes a `trace_id`, which allows the request to be correlated with its corresponding server-side log entry.
 
-<img src="docs/images/valid.png" alt="Valid scholarship application response" width="900">
+<img src="docs/images/Valid.png" alt="Valid scholarship application response" width="900">
 
 ### Step 2: Invalid request
 
@@ -440,7 +440,7 @@ curl -X POST http://localhost:8000/v1/predict \
 
 The service rejects the request with a `422` validation error instead of processing an invalid application. The response follows the same error envelope and includes a `trace_id`.
 
-<img src="docs/images/invalid.png" alt="Invalid scholarship application response" width="900">
+<img src="docs/images/Invalid.png" alt="Invalid scholarship application response" width="900">
 
 ### Step 3: Duplicate application
 
@@ -454,4 +454,4 @@ curl -X POST http://localhost:8000/v1/predict \
 
 The response includes `"duplicate_submission": true`. A duplicate that would otherwise qualify for `auto_accept` is downgraded to `committee_review` rather than being automatically rejected.
 
-<img src="docs/images/duplication.png" alt="Duplicate scholarship application response" width="900">
+<img src="docs/images/Duplication.png" alt="Duplicate scholarship application response" width="900">

@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-typecheck:
+  lint-and-typecheck: #is the architecture layer enforced?
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
       - run: lint-imports
       - run: mypy src/rasheed
 
-  test:
+  test: #All the fast unit and integration tests run here and we check the coverage
     needs: lint-and-typecheck
     runs-on: ubuntu-latest
     env:
@@ -32,7 +32,8 @@ jobs:
       - run: pip install -e ".[dev,api]"
       - run: pytest -m "not slow" --durations=10
 
-  image-smoke-test:
+  image-smoke-test: #This actually builds the real Docker image, starts a real container, 
+  #waits for it to report ready, then sends it one valid request and one malformed request 
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +67,8 @@ jobs:
           fi
       - run: docker stop rasheed-smoke
 
-  publish:
+  publish: #This job runs only on pushes to main, and only if the image-smoke-test job passed. 
+  #It builds the Docker image and pushes it to GitHub Container Registry.
     needs: image-smoke-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest

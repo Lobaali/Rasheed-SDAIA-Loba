@@ -2,9 +2,14 @@
 
 A backend service that automatically screens scholarship applications and
 decides one of three outcomes: **auto-accept**, **send to committee
-review**, or **reject** — built as the capstone project for SDA-AIE-113
-(Software Engineering Practices for AI Systems).
+review**, or **reject**.
 
+This project was completed as part of the SDA-AIE-113 — Software Engineering Practices for AI Systems training program at SDAIA Academy, under the supervision of Abdullah Khalid AlShahrani.
+
+The portfolio demonstrates the practical application of software engineering practices for AI systems — building a production-style AI/ML service through clean architecture, a well-defined API contract, containerization, a layered automated testing suite, a CI/CD pipeline with branch protection, and safe configuration, secrets, and logging management.
+
+Official SDAIA Academy GitHub:
+https://github.com/SDAIAAcademy
 ---
 
 ## 1. The concept, in plain terms
@@ -56,7 +61,7 @@ hard business rule.** `domain/policies.py`'s `decide()` checks
 `to_features()` deliberately never puts `documents_complete` into the
 `FeatureVector` the model receives — so it's not a policy written in a
 comment, it's structurally impossible for the model to learn a weight
-for it. See `DECISIONS.md` #1–#2 and
+for it. See `DECISIONS.md` and
 `tests/unit/test_features.py::test_documents_complete_never_enters_the_feature_vector`.
 
 **Layer by layer:**
@@ -120,7 +125,7 @@ The GPA floor in step 2 is independent of the score threshold on
 purpose: the score blends GPA with financial need, so a low-income,
 mediocre-GPA applicant could score highly on need alone. The floor says
 academic standing must clear its own bar regardless. Full reasoning:
-`DECISIONS.md` #3.
+`DECISIONS.md`.
 
 ---
 
@@ -403,3 +408,50 @@ committed credential), is in `INCIDENT.md`.
         |-- unit/                      # pure logic, test doubles only
         |-- integration/                # real FastAPI app via TestClient
         `-- behavioural/                 # real trained model, marked @pytest.mark.slow
+
+  ---
+  ## 14. API walkthrough 
+
+The API can also be tested interactively through Swagger UI at `http://localhost:8000/docs`.
+
+### Step 1: Valid request
+
+A valid scholarship application is submitted with a GPA of `3.8`, a household size of `4`, monthly family income of `SAR 2,000`, and complete documentation.
+
+```bash
+curl -X POST http://localhost:8000/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{"application_id":"444201187","gpa":3.8,"household_size":4,"monthly_family_income_sar":2000,"documents_complete":true}'
+```
+
+The service returns `auto_accept` for this application. The response also includes a `trace_id`, which allows the request to be correlated with its corresponding server-side log entry.
+
+<img src="docs/images/valid.png" alt="Valid scholarship application response" width="900">
+
+### Step 2: Invalid request
+
+The API validates incoming data before it reaches the scoring logic. Here, the GPA is set to `99`, which is outside the valid `0–5` range.
+
+```bash
+curl -X POST http://localhost:8000/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{"application_id":"444201188","gpa":99,"household_size":4,"monthly_family_income_sar":2000,"documents_complete":true}'
+```
+
+The service rejects the request with a `422` validation error instead of processing an invalid application. The response follows the same error envelope and includes a `trace_id`.
+
+<img src="docs/images/invalid.png" alt="Invalid scholarship application response" width="900">
+
+### Step 3: Duplicate application
+
+The third example demonstrates the duplicate-submission extension. When the same `application_id` is submitted again, the service identifies it as a duplicate.
+
+```bash
+curl -X POST http://localhost:8000/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{"application_id":"444201187","gpa":4.9,"household_size":2,"monthly_family_income_sar":500,"documents_complete":true}'
+```
+
+The response includes `"duplicate_submission": true`. A duplicate that would otherwise qualify for `auto_accept` is downgraded to `committee_review` rather than being automatically rejected.
+
+<img src="docs/images/duplication.png" alt="Duplicate scholarship application response" width="900">

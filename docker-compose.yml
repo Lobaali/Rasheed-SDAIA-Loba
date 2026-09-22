@@ -4,7 +4,6 @@ services:
     image: rasheed:dev
     ports: ["8000:8000"]
     environment:
-      RASHEED_MODEL_PATH: models/rasheed_lr_v1.joblib
       RASHEED_REDIS_URL: redis://duplicate-cache:6379/0
     depends_on:
       duplicate-cache:

@@ -20,10 +20,7 @@ jobs:
       - run: mypy src/rasheed
 
   test: #All the fast unit and integration tests run here and we check the coverage
-    needs: lint-and-typecheck
     runs-on: ubuntu-latest
-    env:
-      RASHEED_MODEL_PATH: models/rasheed_lr_v1.joblib
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,14 +31,14 @@ jobs:
 
   image-smoke-test: #This actually builds the real Docker image, starts a real container, 
   #waits for it to report ready, then sends it one valid request and one malformed request 
-    needs: test
+    needs: [lint-and-typecheck, test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t rasheed:ci .
       - name: Start container and wait for readiness
         run: |
-          docker run -d --name rasheed-smoke -p 8000:8000 -e RASHEED_MODEL_PATH=models/rasheed_lr_v1.joblib rasheed:ci
+          docker run -d --name rasheed-smoke -p 8000:8000 rasheed:ci
           ready=false
           for i in $(seq 1 30); do
             if curl -fsS http://localhost:8000/v1/ready; then ready=true; break; fi

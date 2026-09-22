@@ -40,8 +40,9 @@ jobs:
       - run: docker build -t rasheed:ci .
       - name: Start container and wait for readiness
         run: |
-          docker run -d --name rasheed-smoke -p 8000:8000 rasheed:ci
-          for i in $(seq 1 30); do
+          docker run -d --name rasheed-smoke -p 8000:8000 \
+            -e RASHEED_MODEL_PATH=models/rasheed_lr_v1.joblib \
+            rasheed:ci          for i in $(seq 1 30); do
             if curl -fsS http://localhost:8000/v1/ready; then break; fi
             sleep 1
           done
